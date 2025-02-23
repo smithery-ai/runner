@@ -1,0 +1,61 @@
+{
+  "name": "smithery-runner",
+  "version": "0.1.0-beta.1",
+  "description": "Install and run containerized MCP servers in virtualised sandboxes",
+  "main": "dist/cli/index.js",
+  "bin": {
+    "smithery": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "start": "node dist/cli/index.js",
+    "dev": "ts-node src/cli/index.ts",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "package:clean": "rimraf sea-config.json sea-prep.blob dist/smithery-*",
+    "package:config": "npm run build && echo '{ \"main\": \"dist/cli/index.js\", \"output\": \"sea-prep.blob\", \"disableExperimentalSEAWarning\": true }' > sea-config.json",
+    "package:blob": "node --experimental-sea-config sea-config.json",
+    "package:mac": "cp $(command -v node) dist/smithery-mac && codesign --remove-signature dist/smithery-mac && npx postject dist/smithery-mac NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --macho-segment-name NODE_SEA && chmod +x dist/smithery-mac && codesign --sign - dist/smithery-mac && codesign -vv dist/smithery-mac",
+    "package": "npm run package:clean && npm run package:config && npm run package:blob && npm run package:mac"
+  },
+  "keywords": [
+    "cli",
+    "MCP",
+    "container",
+    "server"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^27.0.0",
+    "@types/node": "^18.19.76",
+    "@types/node-fetch": "^2.6.1",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^8.0.0",
+    "jest": "^27.0.0",
+    "postject": "^1.0.0-alpha.6",
+    "prettier": "^2.0.0",
+    "rimraf": "^5.0.0",
+    "ts-jest": "^27.0.0",
+    "ts-node": "^10.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^4.5.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.5.0",
+    "node-fetch": "^2.6.1"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.ts"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

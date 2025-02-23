@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+
+# Logs
+logs
+*.log
+
+# SEA build artifacts
+sea-prep.blob
+sea-config.json
+
+# Docs
+docs
+
+# node modules
+node_modules
+
+# Rust/Tauri specific
+installer/src-tauri/target/
+installer/src-tauri/gen/schemas
+Cargo.lock
+*.pdb
+*.rs.bk
+
+# Next.js
+installer/.next/
