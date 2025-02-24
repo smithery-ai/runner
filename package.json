@@ -16,8 +16,10 @@
     "package:clean": "rimraf sea-config.json sea-prep.blob installer/src-tauri/resources/smithery*",
     "package:config": "npm run build && echo '{ \"main\": \"dist/cli/index.js\", \"output\": \"sea-prep.blob\", \"disableExperimentalSEAWarning\": true }' > sea-config.json",
     "package:blob": "node --experimental-sea-config sea-config.json",
-    "package:mac": "mkdir -p installer/src-tauri/resources && cp $(command -v node) installer/src-tauri/resources/smithery && codesign --remove-signature installer/src-tauri/resources/smithery && npx postject installer/src-tauri/resources/smithery NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --macho-segment-name NODE_SEA && chmod +x installer/src-tauri/resources/smithery && codesign --sign - installer/src-tauri/resources/smithery && codesign -vv installer/src-tauri/resources/smithery",
-    "package": "npm run package:clean && npm run package:config && npm run package:blob && npm run package:mac"
+    "package:win": "mkdir -p dist && cp $(command -v node) dist/smithery-win.exe && npx postject dist/smithery-win.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
+    "package:linux": "mkdir -p dist && cp $(command -v node) dist/smithery-linux && npx postject dist/smithery-linux NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 && chmod +x dist/smithery-linux",
+    "package:mac": "mkdir -p dist && cp $(command -v node) dist/smithery-macos && codesign --remove-signature dist/smithery-macos && npx postject dist/smithery-macos NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --macho-segment-name NODE_SEA && chmod +x dist/smithery-macos && codesign --sign - dist/smithery-macos",
+    "package": "npm run package:clean && npm run package:config && npm run package:blob && tsx scripts/package-platform.ts"
   },
   "keywords": [
     "cli",

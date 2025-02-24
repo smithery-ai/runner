@@ -8,7 +8,7 @@ async function build() {
             entryPoints: [path.join(__dirname, '../src/cli/index.ts')],
             bundle: true,
             platform: 'node',
-            target: 'node22',
+            target: 'node20',
             outfile: 'dist/cli/index.js',
             format: 'cjs',
         });
