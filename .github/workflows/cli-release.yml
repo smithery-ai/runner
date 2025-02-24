@@ -63,32 +63,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/smithery-linux
           asset_name: smithery-linux
-          asset_content_type: application/octet-stream
-          
-      - name: Calculate SHA256 Hashes
-        run: |
-          echo "DARWIN_SHA=$(shasum -a 256 ./dist/smithery-macos | cut -d ' ' -f 1)" >> $GITHUB_ENV
-          echo "LINUX_SHA=$(shasum -a 256 ./dist/smithery-linux | cut -d ' ' -f 1)" >> $GITHUB_ENV
-
-      - name: Checkout Homebrew Tap
-        uses: actions/checkout@v4
-        with:
-          repository: smithery-ai/homebrew-smithery
-          path: homebrew-smithery
-          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}  # Need a PAT with repo access
-
-      - name: Update Formula
-        run: |
-          cd homebrew-smithery
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"  # Remove 'v' prefix if present
-          
-          sed -i.bak "s/version \".*\"/version \"${VERSION}\"/" Formula/smithery.rb
-          sed -i.bak "s/sha256 \".*\"  # macOS/sha256 \"${DARWIN_SHA}\"  # macOS/" Formula/smithery.rb
-          sed -i.bak "s/sha256 \".*\"  # Linux/sha256 \"${LINUX_SHA}\"  # Linux/" Formula/smithery.rb
-          
-          git config user.name "GitHub Action"
-          git config user.email "action@github.com"
-          git add Formula/smithery.rb
-          git commit -m "Update formula to version ${VERSION}"
-          git push 
+          asset_content_type: application/octet-stream 

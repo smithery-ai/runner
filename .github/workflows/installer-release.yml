@@ -2,7 +2,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*-beta.*'
     paths:
       - 'installer/**'  # Only trigger on changes in installer directory
 
@@ -56,7 +56,7 @@ jobs:
         with:
           projectPath: './installer'  # Point to your Tauri project
           tagName: ${{ github.ref_name }}
-          releaseName: 'Smithery v${{ github.ref_name }}'
-          releaseBody: 'See the assets to download and install this version.'
-          releaseDraft: true
-          prerelease: false 
+          releaseName: 'Smithery Beta ${{ github.ref_name }}'
+          releaseBody: 'Beta release - for testing purposes only.'
+          releaseDraft: false
+          prerelease: true 
