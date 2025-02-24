@@ -13,7 +13,7 @@
     "test": "jest",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
-    "package:clean": "rimraf sea-config.json sea-prep.blob installer/src-tauri/resources/smithery*",
+    "package:clean": "rimraf sea-config.json sea-prep.blob \"installer/src-tauri/resources/smithery-*\"",
     "package:config": "npm run build && echo '{ \"main\": \"dist/cli/index.js\", \"output\": \"sea-prep.blob\", \"disableExperimentalSEAWarning\": true }' > sea-config.json",
     "package:blob": "node --experimental-sea-config sea-config.json",
     "package:win": "mkdir -p dist && cp $(command -v node) dist/smithery-win.exe && npx postject dist/smithery-win.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
