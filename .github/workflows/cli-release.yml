@@ -8,8 +8,38 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  create-release:
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Beta Release ${{ github.ref }}
+          draft: false
+          prerelease: true  # Mark as prerelease
+
+  build:
+    needs: create-release
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset_name: smithery-linux
+            asset_path: ./installer/src-tauri/resources/smithery-linux
+          - os: windows-latest
+            asset_name: smithery-windows.exe
+            asset_path: ./installer/src-tauri/resources/smithery-win.exe
+          - os: macos-latest
+            asset_name: smithery-darwin
+            asset_path: ./installer/src-tauri/resources/smithery-macos
+    
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       
@@ -27,43 +57,12 @@ jobs:
       - name: Package binaries
         run: npm run package
         
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Beta Release ${{ github.ref }}
-          draft: false
-          prerelease: true  # Mark as prerelease
-          
-      - name: Upload Windows Binary
+      - name: Upload Binary
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./installer/src-tauri/resources/smithery-win.exe
-          asset_name: smithery-windows.exe
-          asset_content_type: application/octet-stream
-          
-      - name: Upload macOS Binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./installer/src-tauri/resources/smithery-macos
-          asset_name: smithery-darwin
-          asset_content_type: application/octet-stream
-          
-      - name: Upload Linux Binary
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./installer/src-tauri/resources/smithery-linux
-          asset_name: smithery-linux
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ${{ matrix.asset_path }}
+          asset_name: ${{ matrix.asset_name }}
           asset_content_type: application/octet-stream 
