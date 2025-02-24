@@ -2,7 +2,7 @@ import {
     StdioClientTransport, 
     getDefaultEnvironment 
 } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { StdioConnection } from "../types/registry";
+import { StdioConnection } from "./types/registry";
 import {
 	type JSONRPCMessage,
 	type JSONRPCError,

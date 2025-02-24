@@ -1,5 +1,5 @@
 import { RegistryClient } from './registry';
-import { ServerConfig } from '../types/registry';
+import { ServerConfig } from './types/registry';
 import { createRunner } from './runner';
 
 const registryClient = new RegistryClient();

@@ -1,5 +1,5 @@
-import type { ConnectionDetails } from "../types/registry"
-import type { ServerConfig } from "../types/registry"
+import type { ConnectionDetails } from "./types/registry"
+import type { ServerConfig } from "./types/registry"
 
 export async function FormatConfigValues(
   connection: ConnectionDetails, /* Server config details */
