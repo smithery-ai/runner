@@ -16,7 +16,7 @@
     "package:clean": "rimraf sea-config.json sea-prep.blob",
     "package:config": "npm run build && node -e \"require('fs').writeFileSync('sea-config.json', JSON.stringify({main:'dist/cli/index.js',output:'sea-prep.blob',disableExperimentalSEAWarning:true}, null, 2))\"",
     "package:blob": "node --experimental-sea-config sea-config.json",
-    "package:win": "mkdir -p dist && cp $(command -v node) dist/smithery-win.exe && npx postject dist/smithery-win.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
+    "package:win": "rimraf dist && mkdirp dist && node -e \"require('fs').copyFileSync(process.execPath, 'dist/smithery-win.exe')\" && npx postject dist/smithery-win.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
     "package:linux": "mkdir -p dist && cp $(command -v node) dist/smithery-linux && npx postject dist/smithery-linux NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 && chmod +x dist/smithery-linux",
     "package:mac": "mkdir -p dist && cp $(command -v node) dist/smithery-macos && codesign --remove-signature dist/smithery-macos && npx postject dist/smithery-macos NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --macho-segment-name NODE_SEA && chmod +x dist/smithery-macos && codesign --sign - dist/smithery-macos",
     "package": "npm run package:clean && npm run package:config && npm run package:blob && tsx scripts/package-platform.ts"
