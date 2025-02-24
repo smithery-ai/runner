@@ -2,7 +2,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*-beta.*'  # Only trigger on beta tags like v1.0.0-beta.1
+      - 'cli-v*-beta.*'  # Changed to CLI-specific tag pattern
 
 permissions:
   contents: write

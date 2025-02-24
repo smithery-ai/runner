@@ -2,7 +2,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*-beta.*'
+      - 'installer-v*-beta.*'
     paths:
       - 'installer/**'  # Only trigger on changes in installer directory
 
