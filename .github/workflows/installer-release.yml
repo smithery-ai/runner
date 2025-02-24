@@ -6,6 +6,9 @@ on:
     paths:
       - 'installer/**'  # Only trigger on changes in installer directory
 
+permissions:
+  contents: write  # Add this permissions block
+
 jobs:
   release:
     strategy:
