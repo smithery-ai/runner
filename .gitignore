@@ -36,3 +36,4 @@ Cargo.lock
 
 # Next.js
 installer/.next/
+installer/out
