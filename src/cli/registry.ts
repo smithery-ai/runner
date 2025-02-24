@@ -1,9 +1,5 @@
 import fetch from 'node-fetch';
-import { config as dotenvConfig } from 'dotenv';
 import { StdioConnection, StdioConnectionSchema, ServerConfig, RegistryServer } from './types/registry';
-
-// Load environment variables from .env file
-dotenvConfig();
 
 export class RegistryClient {
   private readonly endpoint: string;
