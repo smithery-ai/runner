@@ -1,32 +1,68 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::process::Command;
+use std::path::PathBuf;
 
 #[tauri::command]
 async fn install_cli_binary() -> Result<(), String> {
-    let bin_dir = std::path::PathBuf::from("/usr/local/bin");
-    let binary_name = "smithery";
-    let dest_path = bin_dir.join(binary_name);
-    let source_path = std::path::PathBuf::from("/Users/arjun/Documents/github/runner/dist/smithery-mac");
+    let version = "0.1.0-beta.1"; // You might want to make this configurable
+    
+    // Determine platform-specific binary name
+    let binary_name = match std::env::consts::OS {
+        "windows" => "smithery-windows.exe",
+        "linux" => "smithery-linux",
+        "macos" => "smithery-darwin",
+        _ => return Err("Unsupported platform".into()),
+    };
 
-    // Use osascript to prompt for sudo permission and execute cp command
-    let script = format!(
-        "do shell script \"cp '{}' '{}' && chmod 755 '{}'\" with administrator privileges",
-        source_path.display(),
-        dest_path.display(),
-        dest_path.display()
+    // Construct GitHub release download URL
+    let url = format!(
+        "https://github.com/smithery-ai/runner/releases/download/{}/{}",
+        version, binary_name
     );
 
-    let output = Command::new("osascript")
-        .arg("-e")
-        .arg(&script)
-        .output()
-        .map_err(|e| format!("Failed to execute osascript: {}", e))?;
+    // Download the binary
+    let response = reqwest::get(&url)
+        .await
+        .map_err(|e| format!("Failed to download binary: {}", e))?;
 
-    if !output.status.success() {
-        let error = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("Failed to install binary: {}", error));
+    if !response.status().is_success() {
+        return Err(format!("Failed to download binary: HTTP {}", response.status()));
+    }
+
+    let bytes = response.bytes()
+        .await
+        .map_err(|e| format!("Failed to read binary data: {}", e))?;
+
+    // Get installation directory
+    let bin_dir = if cfg!(target_os = "windows") {
+        PathBuf::from(std::env::var("LOCALAPPDATA").unwrap_or_else(|_| String::from("C:\\Program Files")))
+            .join("Smithery")
+            .join("bin")
+    } else {
+        PathBuf::from("/usr/local/bin")
+    };
+
+    // Create directory if it doesn't exist
+    std::fs::create_dir_all(&bin_dir)
+        .map_err(|e| format!("Failed to create installation directory: {}", e))?;
+
+    let dest_path = bin_dir.join(binary_name);
+
+    // Write binary to disk
+    std::fs::write(&dest_path, bytes)
+        .map_err(|e| format!("Failed to write binary: {}", e))?;
+
+    // Make executable on Unix systems
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = std::fs::metadata(&dest_path)
+            .map_err(|e| format!("Failed to get file permissions: {}", e))?
+            .permissions();
+        perms.set_mode(0o755);
+        std::fs::set_permissions(&dest_path, perms)
+            .map_err(|e| format!("Failed to set file permissions: {}", e))?;
     }
 
     Ok(())

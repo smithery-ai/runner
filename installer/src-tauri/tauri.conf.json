@@ -35,9 +35,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [
-      "resources/*"
-    ],
     "macOS": {
       "frameworks": [],
       "minimumSystemVersion": "10.13",
@@ -49,6 +46,9 @@
     }
   },
   "plugins": {
+    "http": {
+      "scope": ["https://github.com/smithery-ai/runner/releases/download/*"]
+    },
     "shell": {
       "scope": [
         {
