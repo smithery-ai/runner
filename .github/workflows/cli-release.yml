@@ -2,7 +2,7 @@ name: Release
 on:
   push:
     tags:
-      - 'cli-v*-beta.*'  # Changed to CLI-specific tag pattern
+      - 'cli-beta.v*'  # Changed to CLI-specific tag pattern
 
 permissions:
   contents: write
