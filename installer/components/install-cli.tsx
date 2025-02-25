@@ -8,7 +8,7 @@ type InstallStatus = 'idle' | 'checking' | 'installing-cli' | 'installing-podman
 export default function InstallCLI() {
   const [status, setStatus] = useState<InstallStatus>('idle')
   const [errorMsg, setErrorMsg] = useState('')
-  const [podmanVersion, setPodmanVersion] = useState('')
+  // const [podmanVersion, setPodmanVersion] = useState('')
 
   // Get platform-specific installation command
   const getPodmanInstallCommand = () => {
@@ -25,14 +25,13 @@ export default function InstallCLI() {
   const checkPodman = async () => {
     try {
       setStatus('checking')
-      const version = await invoke<string>('check_podman_installed')
-      setPodmanVersion(version)
+      await invoke<string>('check_podman_installed')
       // Podman is installed, proceed to CLI installation
       installCLI()
     } catch (error) {
       // Podman is not installed
       setStatus('podman-missing')
-      setErrorMsg('Podman is required but not installed')
+      setErrorMsg(`Podman is required but not installed: ${error}`)
     }
   }
 
