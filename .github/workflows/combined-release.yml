@@ -1,0 +1,130 @@
+name: Combined CLI and Installer Release
+on:
+  push:
+    tags:
+      - 'release-beta.v*'  # Combined release tag pattern
+
+permissions:
+  contents: write
+
+jobs:
+  # First build the CLI for all platforms
+  build-cli:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset_name: smithery-linux
+            asset_path: ./dist/smithery-linux
+          - os: windows-latest
+            asset_name: smithery-windows.exe
+            asset_path: ./dist/smithery-win.exe
+          - os: macos-latest
+            asset_name: smithery-darwin
+            asset_path: ./dist/smithery-macos
+    
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build
+        run: npm run build
+        
+      - name: Package binaries
+        run: npm run package
+        
+      - name: Upload CLI artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: cli-${{ matrix.asset_name }}
+          path: ${{ matrix.asset_path }}
+          retention-days: 1
+
+  # Then build the installer with the CLI binaries included
+  build-installer:
+    needs: build-cli
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, windows-latest, ubuntu-latest]
+        include:
+          - platform: macos-latest
+            cli_artifact: cli-smithery-darwin
+            cli_dest: installer/src-tauri/resources/smithery-darwin
+          - platform: windows-latest
+            cli_artifact: cli-smithery-windows.exe
+            cli_dest: installer/src-tauri/resources/smithery-windows.exe
+          - platform: ubuntu-latest
+            cli_artifact: cli-smithery-linux
+            cli_dest: installer/src-tauri/resources/smithery-linux
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: './installer/package-lock.json'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Download CLI binary
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ matrix.cli_artifact }}
+          path: ./temp-cli
+
+      - name: Create resources directory
+        run: mkdir -p installer/src-tauri/resources
+
+      - name: Copy CLI binary to resources
+        shell: bash
+        run: |
+          cp ./temp-cli/* ${{ matrix.cli_dest }}
+          chmod +x ${{ matrix.cli_dest }}
+
+      - name: Install dependencies (ubuntu)
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-6.0-dev libappindicator3-dev librsvg2-dev patchelf
+          npm install
+        working-directory: ./installer
+
+      - name: Install dependencies (macOS)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          rustup target add aarch64-apple-darwin
+          npm install
+        working-directory: ./installer
+
+      - name: Install dependencies (windows)
+        if: matrix.platform == 'windows-latest'
+        run: |
+          rustup target add x86_64-pc-windows-msvc
+          npm install
+        working-directory: ./installer
+
+      - name: Build Tauri
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: './installer'
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Smithery Beta ${{ github.ref_name }}'
+          releaseBody: 'Beta release with bundled CLI - for testing purposes only.'
+          releaseDraft: false
+          prerelease: true 

@@ -1,4 +1,4 @@
-name: Release
+name: Installer Release
 on:
   push:
     tags:
@@ -37,7 +37,7 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-6.0-dev libappindicator3-dev librsvg2-dev patchelf
           npm install
 
       - name: Install dependencies (macOS)
