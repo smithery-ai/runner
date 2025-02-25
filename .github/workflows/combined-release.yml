@@ -150,6 +150,8 @@ jobs:
         if: matrix.platform == 'windows-latest'
         run: |
           rustup target add x86_64-pc-windows-msvc
+          # Skip the problematic script by modifying package.json temporarily
+          node -e "const pkg = require('./package.json'); pkg.scripts['copy-binary-to-resources'] = 'echo Skipped in CI'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
           npm install
         working-directory: ./installer
 
