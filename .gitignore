@@ -29,7 +29,7 @@ node_modules
 # Rust/Tauri specific
 installer/src-tauri/target/
 installer/src-tauri/gen/schemas
-installer/src-tauri/resources/smithery*
+installer/src-tauri/resources/**
 Cargo.lock
 *.pdb
 *.rs.bk

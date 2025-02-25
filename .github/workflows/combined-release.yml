@@ -2,7 +2,7 @@ name: Combined CLI and Installer Release
 on:
   push:
     tags:
-      - 'release-beta.v*'  # Combined release tag pattern
+      - 'beta.v*'  # Combined release tag pattern
 
 permissions:
   contents: write

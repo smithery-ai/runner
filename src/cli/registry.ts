@@ -1,82 +1,102 @@
-import fetch from 'node-fetch';
-import { StdioConnection, StdioConnectionSchema, ServerConfig, RegistryServer } from './types/registry';
+import { config as dotenvConfig } from "dotenv"
+import {
+	type StdioConnection,
+	StdioConnectionSchema,
+	type ServerConfig,
+	type RegistryServer,
+} from "./types/registry"
+import type { WSConnection } from "./types/registry"
 
-export class RegistryClient {
-  private readonly endpoint: string;
+dotenvConfig()
 
-  constructor(endpoint?: string) {
-    this.endpoint = endpoint || process.env.REGISTRY_ENDPOINT || "https://registry.smithery.ai";
-    if (!this.endpoint) {
-      throw new Error('REGISTRY_ENDPOINT environment variable is not set');
-    }
-  }
+const getEndpoint = (): string => {
+	const endpoint =
+		process.env.REGISTRY_ENDPOINT || "https://registry.smithery.ai"
+	if (!endpoint) {
+		throw new Error("REGISTRY_ENDPOINT environment variable is not set")
+	}
+	return endpoint
+}
 
-  async resolvePackage(packageName: string): Promise<RegistryServer> {
-    try {
-      const response = await fetch(`${this.endpoint}/resolve/${packageName}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+/* Get server details from registry */
+export const resolvePackage = async (
+	packageName: string,
+): Promise<RegistryServer> => {
+	const endpoint = getEndpoint()
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Package resolution failed with status ${response.status}: ${errorText}`
-        );
-      }
+	try {
+		const response = await fetch(`${endpoint}/servers/${packageName}`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+			},
+		})
 
-      const data = await response.json();
-      
-      if (!data.success || !data.result) {
-        throw new Error('Invalid resolution response format');
-      }
-      
-      return data.result.resolvedPackage;
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to resolve package: ${error.message}`);
-      }
-      throw error;
-    }
-  }
+		if (!response.ok) {
+			const errorData = (await response.json().catch(() => null)) as {
+				error?: string
+			}
+			const errorMessage = errorData?.error || (await response.text())
 
-  async fetchConnection(packageName: string, config: ServerConfig): Promise<StdioConnection> {
-    try {
-      const requestBody = {
-        connectionType: 'stdio',
-        config,
-      };
+			if (response.status === 404) {
+				throw new Error(`Server "${packageName}" not found`)
+			}
 
-      const response = await fetch(`${this.endpoint}/servers/${packageName}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+			throw new Error(
+				`Package resolution failed with status ${response.status}: ${errorMessage}`,
+			)
+		}
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Registry request failed with status ${response.status}: ${errorText}`
-        );
-      }
+		return (await response.json()) as RegistryServer
+	} catch (error) {
+		if (error instanceof Error) {
+			throw error // Pass through our custom errors without wrapping
+		}
+		throw new Error(`Failed to resolve package: ${error}`)
+	}
+}
 
-      const data = await response.json();
-      
-      // Extract the result field before validation
-      if (!data.success || !data.result) {
-        throw new Error('Invalid server response format');
-      }
-      
-      return StdioConnectionSchema.parse(data.result);
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to fetch server metadata: ${error.message}`);
-      }
-      throw error;
-    }
-  }
-} 
+export const fetchConnection = async (
+	packageName: string,
+	config: ServerConfig,
+): Promise<StdioConnection> => {
+	const endpoint = getEndpoint()
+
+	try {
+		const requestBody = {
+			connectionType: "stdio",
+			config,
+		}
+
+		const response = await fetch(`${endpoint}/servers/${packageName}`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(requestBody),
+		})
+
+		if (!response.ok) {
+			const errorText = await response.text()
+			throw new Error(
+				`Registry request failed with status ${response.status}: ${errorText}`,
+			)
+		}
+
+		const data = (await response.json()) as {
+			success: boolean
+			result?: StdioConnection | WSConnection
+		}
+
+		if (!data.success || !data.result) {
+			throw new Error("Invalid registry response format")
+		}
+
+		return StdioConnectionSchema.parse(data.result)
+	} catch (error) {
+		if (error instanceof Error) {
+			throw new Error(`Failed to fetch server connection: ${error.message}`)
+		}
+		throw error
+	}
+}

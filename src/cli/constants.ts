@@ -3,6 +3,8 @@ export const VALID_CLIENTS = [
 	"cline",
 	"windsurf",
 	"roo-cline",
+	"witsy",
+	"enconvo"
 ] as const
 export type ValidClient = (typeof VALID_CLIENTS)[number]
 

@@ -74,3 +74,8 @@ export type WSConnection = z.infer<typeof WSConnectionSchema>
 // Configured server
 export type ConfiguredServer = StdioConnection | WSConnection
 
+// list of configured MCP servers stored locally
+export interface MCPConfig {
+	mcpServers: Record<string, ConfiguredServer>
+}
+
