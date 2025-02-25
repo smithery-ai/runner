@@ -1,4 +1,3 @@
-import { config as dotenvConfig } from "dotenv"
 import {
 	type StdioConnection,
 	StdioConnectionSchema,
@@ -6,8 +5,6 @@ import {
 	type RegistryServer,
 } from "./types/registry"
 import type { WSConnection } from "./types/registry"
-
-dotenvConfig()
 
 const getEndpoint = (): string => {
 	const endpoint =
