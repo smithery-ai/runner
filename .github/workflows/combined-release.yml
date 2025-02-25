@@ -8,8 +8,26 @@ permissions:
   contents: write
 
 jobs:
-  # First build the CLI for all platforms
+  # First create the release
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Smithery Beta ${{ github.ref }}
+          draft: false
+          prerelease: true  # Mark as prerelease
+
+  # Then build the CLI for all platforms
   build-cli:
+    needs: create-release
     strategy:
       matrix:
         include:
@@ -41,8 +59,18 @@ jobs:
       - name: Package binaries
         run: npm run package
         
-      - name: Upload CLI artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload CLI binary to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ${{ matrix.asset_path }}
+          asset_name: ${{ matrix.asset_name }}
+          asset_content_type: application/octet-stream
+          
+      - name: Upload CLI artifact for installer
+        uses: actions/upload-artifact@v4
         with:
           name: cli-${{ matrix.asset_name }}
           path: ${{ matrix.asset_path }}
@@ -81,7 +109,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Download CLI binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.cli_artifact }}
           path: ./temp-cli
