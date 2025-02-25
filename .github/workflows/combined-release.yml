@@ -82,14 +82,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, windows-latest, ubuntu-latest]
+        # Temporarily remove Windows from the build matrix
+        platform: [macos-latest, ubuntu-latest]
         include:
           - platform: macos-latest
             cli_artifact: cli-smithery-darwin
             cli_dest: installer/src-tauri/resources/smithery-darwin
-          - platform: windows-latest
-            cli_artifact: cli-smithery-windows.exe
-            cli_dest: installer/src-tauri/resources/smithery-windows.exe
+          # Comment out Windows configuration
+          # - platform: windows-latest
+          #   cli_artifact: cli-smithery-windows.exe
+          #   cli_dest: installer/src-tauri/resources/smithery-windows.exe
           - platform: ubuntu-latest
             cli_artifact: cli-smithery-linux
             cli_dest: installer/src-tauri/resources/smithery-linux
@@ -118,18 +120,18 @@ jobs:
         shell: bash
         run: mkdir -p installer/src-tauri/resources
 
-      - name: Copy CLI binary to resources (Unix)
-        if: matrix.platform != 'windows-latest'
+      - name: Copy CLI binary to resources
         shell: bash
         run: |
           cp ./temp-cli/* ${{ matrix.cli_dest }}
           chmod +x ${{ matrix.cli_dest }}
 
-      - name: Copy CLI binary to resources (Windows)
-        if: matrix.platform == 'windows-latest'
-        shell: powershell
-        run: |
-          Copy-Item -Path "./temp-cli/*" -Destination "${{ matrix.cli_dest }}" -Force
+      # Comment out Windows-specific copy step
+      # - name: Copy CLI binary to resources (Windows)
+      #   if: matrix.platform == 'windows-latest'
+      #   shell: powershell
+      #   run: |
+      #     Copy-Item -Path "./temp-cli/*" -Destination "${{ matrix.cli_dest }}" -Force
 
       - name: Install dependencies (ubuntu)
         if: matrix.platform == 'ubuntu-latest'
@@ -146,14 +148,15 @@ jobs:
           npm install
         working-directory: ./installer
 
-      - name: Install dependencies (windows)
-        if: matrix.platform == 'windows-latest'
-        run: |
-          rustup target add x86_64-pc-windows-msvc
-          # Skip the problematic script by modifying package.json temporarily
-          node -e "const pkg = require('./package.json'); pkg.scripts['copy-binary-to-resources'] = 'echo Skipped in CI'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
-          npm install
-        working-directory: ./installer
+      # Comment out Windows-specific dependencies step
+      # - name: Install dependencies (windows)
+      #   if: matrix.platform == 'windows-latest'
+      #   run: |
+      #     rustup target add x86_64-pc-windows-msvc
+      #     # Skip the problematic script by modifying package.json temporarily
+      #     node -e "const pkg = require('./package.json'); pkg.scripts['copy-binary-to-resources'] = 'echo Skipped in CI'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+      #     npm install
+      #   working-directory: ./installer
 
       - name: Build Tauri
         uses: tauri-apps/tauri-action@v0
