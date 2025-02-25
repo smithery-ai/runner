@@ -115,13 +115,21 @@ jobs:
           path: ./temp-cli
 
       - name: Create resources directory
+        shell: bash
         run: mkdir -p installer/src-tauri/resources
 
-      - name: Copy CLI binary to resources
+      - name: Copy CLI binary to resources (Unix)
+        if: matrix.platform != 'windows-latest'
         shell: bash
         run: |
           cp ./temp-cli/* ${{ matrix.cli_dest }}
           chmod +x ${{ matrix.cli_dest }}
+
+      - name: Copy CLI binary to resources (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: powershell
+        run: |
+          Copy-Item -Path "./temp-cli/*" -Destination "${{ matrix.cli_dest }}" -Force
 
       - name: Install dependencies (ubuntu)
         if: matrix.platform == 'ubuntu-latest'
