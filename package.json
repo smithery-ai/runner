@@ -18,7 +18,7 @@
     "package:blob": "node --experimental-sea-config sea-config.json",
     "package:win": "rimraf dist && node -e \"require('fs').mkdirSync('dist', { recursive: true })\" && node -e \"require('fs').copyFileSync(process.execPath, 'dist/smithery-win.exe')\" && npx postject dist/smithery-win.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
     "package:linux": "mkdir -p dist && cp $(command -v node) dist/smithery-linux && npx postject dist/smithery-linux NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 && chmod +x dist/smithery-linux",
-    "package:mac": "mkdir -p dist && cp $(command -v node) dist/smithery-macos && codesign --remove-signature dist/smithery-macos && npx postject dist/smithery-macos NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --macho-segment-name NODE_SEA && chmod +x dist/smithery-macos && codesign --sign - dist/smithery-macos",
+    "package:mac": "mkdir -p dist && cp $(command -v node) dist/smithery-darwin && codesign --remove-signature dist/smithery-darwin && npx postject dist/smithery-darwin NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --macho-segment-name NODE_SEA && chmod +x dist/smithery-darwin && codesign --sign - dist/smithery-darwin",
     "package": "npm run package:clean && npm run package:config && npm run package:blob && tsx scripts/package-platform.ts && npm run copy-binary-to-resources",
     "copy-binary-to-resources": "mkdir -p installer/src-tauri/resources && cp dist/smithery-* installer/src-tauri/resources/"
   },

@@ -26,17 +26,54 @@ async function ensurePodmanMachineRunning() {
 
         const { stdout } = await execAsync('podman machine list --format json');
         const machines = JSON.parse(stdout);
+        
+        // Custom machine name for our application
+        const machineName = 'smithery-vm';
 
-        if (!machines.length) {
-            console.error("[Runner] Initializing new Podman machine...");
-            await execAsync('podman machine init');
-            console.error("[Runner] Starting new Podman machine...");
-            await execAsync('podman machine start');
-            console.error("[Runner] Podman machine initialized and started successfully");
-        } else if (!machines.some((m: any) => m.Running)) {
-            console.error("[Runner] Starting Podman machine...");
-            await execAsync('podman machine start');
-            console.error("[Runner] Podman machine started successfully");
+        // Check if our machine exists
+        const ourMachine = machines.find((m: any) => m.Name === machineName);
+        
+        if (!ourMachine) {
+            console.error(`[Runner] Initializing new Podman machine '${machineName}'...`);
+            // Use the machine name as a positional argument
+            await execAsync(`podman machine init ${machineName}`);
+            console.error(`[Runner] Starting new Podman machine '${machineName}'...`);
+            await execAsync(`podman machine start ${machineName}`);
+            console.error(`[Runner] Podman machine '${machineName}' initialized and started successfully`);
+        } else if (!ourMachine.Running) {
+            console.error(`[Runner] Starting Podman machine '${machineName}'...`);
+            await execAsync(`podman machine start ${machineName}`);
+            console.error(`[Runner] Podman machine '${machineName}' started successfully`);
+        }
+        
+        // Set our machine as the active connection
+        console.error(`[Runner] Setting '${machineName}' as the active Podman machine...`);
+        await execAsync(`podman system connection default ${machineName}`);
+        
+        // Verify the machine is operational by running a simple command
+        console.error(`[Runner] Verifying Podman machine connection...`);
+        
+        // Retry mechanism for Podman connection
+        let connected = false;
+        let retries = 0;
+        const maxRetries = 5;
+        
+        while (!connected && retries < maxRetries) {
+            try {
+                // Use the explicit machine name for verification
+                await execAsync(`podman --connection ${machineName} info`);
+                connected = true;
+                console.error(`[Runner] Successfully connected to Podman machine '${machineName}'`);
+            } catch (error) {
+                retries++;
+                console.error(`[Runner] Waiting for Podman connection to '${machineName}' (attempt ${retries}/${maxRetries})...`);
+                // Wait 2 seconds before retrying
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+        
+        if (!connected) {
+            throw new Error(`Failed to connect to Podman machine '${machineName}' after multiple attempts`);
         }
     } catch (error) {
         console.error("[Runner] Error checking/starting Podman machine:", error);
