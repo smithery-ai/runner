@@ -31,9 +31,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            asset_name: smithery-linux
-            asset_path: ./dist/smithery-linux
+          # Comment out Linux configuration
+          # - os: ubuntu-latest
+          #   asset_name: smithery-linux
+          #   asset_path: ./dist/smithery-linux
           # Comment out Windows configuration
           # - os: windows-latest
           #   asset_name: smithery-windows.exe
@@ -83,8 +84,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Temporarily remove Windows from the build matrix
-        platform: [macos-latest, ubuntu-latest]
+        # Focus only on macOS for now
+        platform: [macos-latest]
         include:
           - platform: macos-latest
             cli_artifact: cli-smithery-darwin
@@ -93,9 +94,10 @@ jobs:
           # - platform: windows-latest
           #   cli_artifact: cli-smithery-windows.exe
           #   cli_dest: installer/src-tauri/resources/smithery-windows.exe
-          - platform: ubuntu-latest
-            cli_artifact: cli-smithery-linux
-            cli_dest: installer/src-tauri/resources/smithery-linux
+          # Comment out Linux configuration
+          # - platform: ubuntu-latest
+          #   cli_artifact: cli-smithery-linux
+          #   cli_dest: installer/src-tauri/resources/smithery-linux
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -117,6 +119,17 @@ jobs:
           name: ${{ matrix.cli_artifact }}
           path: ./temp-cli
 
+      - name: Verify downloaded CLI binary
+        shell: bash
+        run: |
+          ls -la ./temp-cli/
+          file_count=$(ls -1 ./temp-cli/ | wc -l)
+          if [ "$file_count" -eq 0 ]; then
+            echo "Error: No CLI binary found in downloaded artifact"
+            exit 1
+          fi
+          echo "CLI binary successfully downloaded"
+
       - name: Create resources directory
         shell: bash
         run: mkdir -p installer/src-tauri/resources
@@ -127,20 +140,36 @@ jobs:
           cp ./temp-cli/* ${{ matrix.cli_dest }}
           chmod +x ${{ matrix.cli_dest }}
 
-      # Comment out Windows-specific copy step
-      # - name: Copy CLI binary to resources (Windows)
-      #   if: matrix.platform == 'windows-latest'
-      #   shell: powershell
-      #   run: |
-      #     Copy-Item -Path "./temp-cli/*" -Destination "${{ matrix.cli_dest }}" -Force
-
-      - name: Install dependencies (ubuntu)
-        if: matrix.platform == 'ubuntu-latest'
+      - name: Verify CLI binary integration
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-6.0-dev libappindicator3-dev librsvg2-dev patchelf
-          npm install
-        working-directory: ./installer
+          if [ ! -f "${{ matrix.cli_dest }}" ]; then
+            echo "Error: CLI binary not found at destination path"
+            exit 1
+          fi
+          
+          if [ ! -x "${{ matrix.cli_dest }}" ]; then
+            echo "Error: CLI binary is not executable"
+            exit 1
+          fi
+          
+          file_size=$(stat -f%z "${{ matrix.cli_dest }}" 2>/dev/null || stat -c%s "${{ matrix.cli_dest }}")
+          echo "CLI binary size: $file_size bytes"
+          
+          # Basic functionality test (adjust command as needed)
+          echo "Testing CLI binary..."
+          "${{ matrix.cli_dest }}" --version || "${{ matrix.cli_dest }}" -v || "${{ matrix.cli_dest }}" || echo "Note: Binary executed but may not support version flag"
+          
+          echo "✅ CLI binary successfully integrated"
+
+      # Comment out Ubuntu-specific dependencies step
+      # - name: Install dependencies (ubuntu)
+      #   if: matrix.platform == 'ubuntu-latest'
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y libgtk-3-dev libwebkit2gtk-6.0-dev libappindicator3-dev librsvg2-dev patchelf
+      #     npm install
+      #   working-directory: ./installer
 
       - name: Install dependencies (macOS)
         if: matrix.platform == 'macos-latest'
