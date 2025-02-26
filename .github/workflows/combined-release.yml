@@ -40,7 +40,7 @@ jobs:
           #   asset_name: smithery-windows.exe
           #   asset_path: ./dist/smithery-win.exe
           - os: macos-latest
-            asset_name: smithery-darwin
+            asset_name: smithery-macos
             asset_path: ./dist/smithery-macos
     
     runs-on: ${{ matrix.os }}
@@ -88,8 +88,8 @@ jobs:
         platform: [macos-latest]
         include:
           - platform: macos-latest
-            cli_artifact: cli-smithery-darwin
-            cli_dest: installer/src-tauri/resources/smithery-darwin
+            cli_artifact: cli-smithery-macos
+            cli_dest: installer/src-tauri/resources/smithery-macos
           # Comment out Windows configuration
           # - platform: windows-latest
           #   cli_artifact: cli-smithery-windows.exe

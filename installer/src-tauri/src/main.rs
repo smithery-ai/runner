@@ -102,7 +102,7 @@ async fn install_cli_binary(app_handle: tauri::AppHandle) -> Result<(), String> 
             .path()
             .resource_dir()
             .map_err(|e| format!("Failed to get resource directory: {}", e))?
-            .join("resources/windows/smithery.exe");
+            .join("resources/smithery-win.exe");
 
         // Try to create directory and symlink with elevated privileges
         // This is a simplified approach - in a real app, you might want to use a proper installer
@@ -184,7 +184,7 @@ async fn install_cli_binary(app_handle: tauri::AppHandle) -> Result<(), String> 
             .path()
             .resource_dir()
             .map_err(|e| format!("Failed to get resource directory: {}", e))?
-            .join("resources/linux/smithery");
+            .join("resources/smithery-linux");
 
         // Make sure the binary is executable
         let output = Command::new("chmod")
