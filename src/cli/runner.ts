@@ -184,18 +184,43 @@ async function createRunner(connection: StdioConnection) {
         await ensurePodmanMachineRunning();
         
         // Force the use of Docker Hub registry instead of user's default registry
-        // Add --registry docker.io flag to ensure images are pulled from Docker Hub
         if (finalArgs.includes('pull') || finalArgs.includes('run')) {
-            // Check if registry is already specified
-            const hasRegistry = finalArgs.some(arg => arg === '--registry');
-            if (!hasRegistry) {
-                console.error("[Runner] Overriding registry: Adding --registry docker.io to ensure Docker Hub is used");
-                finalArgs = [...finalArgs, '--registry', 'docker.io'];
+            // For pull and run commands, we need to ensure the image is pulled from docker.io
+            const pullIndex = finalArgs.indexOf('pull');
+            const runIndex = finalArgs.indexOf('run');
+            const commandIndex = Math.max(pullIndex, runIndex);
+            
+            if (commandIndex !== -1) {
+                // Check if an image name is specified without a registry
+                let imageArgIndex = -1;
+                
+                // Find the image argument (typically after the command and any options)
+                for (let i = commandIndex + 1; i < finalArgs.length; i++) {
+                    if (!finalArgs[i].startsWith('-')) {
+                        imageArgIndex = i;
+                        break;
+                    }
+                }
+                
+                if (imageArgIndex !== -1) {
+                    const imageName = finalArgs[imageArgIndex];
+                    
+                    // If the image doesn't already have a registry specified, prefix it with docker.io
+                    if (!imageName.includes('/') || 
+                        (!imageName.includes('.') && !imageName.includes(':') && imageName.split('/').length < 3)) {
+                        console.error(`[Runner] Overriding registry: Prefixing image ${imageName} with docker.io/`);
+                        finalArgs[imageArgIndex] = `docker.io/${imageName}`;
+                    } else {
+                        console.error(`[Runner] Image ${imageName} already has a registry specified`);
+                    }
+                } else {
+                    console.error(`[Runner] No image argument found after ${finalArgs[commandIndex]} command`);
+                }
             } else {
-                console.error("[Runner] Registry flag already specified in command arguments");
+                console.error(`[Runner] No registry override needed for this command`);
             }
         } else {
-            console.error("[Runner] No registry override needed for this command");
+            console.error(`[Runner] No registry override needed for this command`);
         }
     }
 
