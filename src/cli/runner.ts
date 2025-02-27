@@ -15,6 +15,11 @@ type RunnerState = {
     stdinBuffer: string;
 }
 
+/* 
+do not use any defaults.
+find common defaults used, and do a custom setting of it
+*/
+
 async function ensurePodmanMachineRunning() {
     // Only needed for Windows/macOS
     if (process.platform === 'linux') return;
@@ -177,6 +182,21 @@ async function createRunner(connection: StdioConnection) {
             finalCommand = 'podman';
         }
         await ensurePodmanMachineRunning();
+        
+        // Force the use of Docker Hub registry instead of user's default registry
+        // Add --registry docker.io flag to ensure images are pulled from Docker Hub
+        if (finalArgs.includes('pull') || finalArgs.includes('run')) {
+            // Check if registry is already specified
+            const hasRegistry = finalArgs.some(arg => arg === '--registry');
+            if (!hasRegistry) {
+                console.error("[Runner] Overriding registry: Adding --registry docker.io to ensure Docker Hub is used");
+                finalArgs = [...finalArgs, '--registry', 'docker.io'];
+            } else {
+                console.error("[Runner] Registry flag already specified in command arguments");
+            }
+        } else {
+            console.error("[Runner] No registry override needed for this command");
+        }
     }
 
     console.error("[Runner] Executing:", {
