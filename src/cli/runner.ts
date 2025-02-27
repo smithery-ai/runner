@@ -191,19 +191,39 @@ async function createRunner(connection: StdioConnection) {
             const commandIndex = Math.max(pullIndex, runIndex);
             
             if (commandIndex !== -1) {
-                // Check if an image name is specified without a registry
+                // Find the image argument - it's typically the first non-option argument after 'run'
+                // that doesn't follow certain option flags that take arguments
                 let imageArgIndex = -1;
+                let skipNext = false;
                 
-                // Find the image argument (typically after the command and any options)
+                // Options that take arguments and should be skipped along with their values
+                const optionsWithArgs = ['--mount', '-v', '--volume', '-e', '--env', '-p', '--publish', '--name'];
+                
                 for (let i = commandIndex + 1; i < finalArgs.length; i++) {
-                    if (!finalArgs[i].startsWith('-')) {
-                        imageArgIndex = i;
-                        break;
+                    if (skipNext) {
+                        skipNext = false;
+                        continue;
                     }
+                    
+                    const arg = finalArgs[i];
+                    
+                    // Skip option flags and their values
+                    if (arg.startsWith('-')) {
+                        // If this is an option that takes an argument, skip the next item too
+                        if (optionsWithArgs.includes(arg)) {
+                            skipNext = true;
+                        }
+                        continue;
+                    }
+                    
+                    // First non-option argument should be the image
+                    imageArgIndex = i;
+                    break;
                 }
                 
                 if (imageArgIndex !== -1) {
                     const imageName = finalArgs[imageArgIndex];
+                    console.error(`[Runner] Found image name: ${imageName}`);
                     
                     // If the image doesn't already have a registry specified, prefix it with docker.io
                     if (!imageName.includes('/') || 
